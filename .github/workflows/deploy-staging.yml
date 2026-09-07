@@ -1,0 +1,46 @@
+name: Deploy Empire Networks to Staging
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Empire-Networks-Responsive-3D/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Empire-Networks-Responsive-3D
+        run: npm ci
+
+      - name: Build website
+        working-directory: Empire-Networks-Responsive-3D
+        run: npm run build
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_SSH_KEY }}" > ~/.ssh/empire-staging
+          chmod 600 ~/.ssh/empire-staging
+
+      - name: Add staging server to known hosts
+        run: |
+          ssh-keyscan -p "${{ secrets.STAGING_PORT }}" "${{ secrets.STAGING_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy website
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/empire-staging -p ${{ secrets.STAGING_PORT }}" \
+            Empire-Networks-Responsive-3D/dist/ \
+            ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/var/www/empire-networks-staging/
