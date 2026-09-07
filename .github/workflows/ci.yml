@@ -1,0 +1,35 @@
+name: Empire Networks CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: empire-website/package-lock.json
+
+      - name: Install dependencies
+        working-directory: empire-website
+        run: npm ci
+
+      - name: Build website
+        working-directory: empire-website
+        run: npm run build
