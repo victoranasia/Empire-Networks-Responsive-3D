@@ -24,12 +24,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: empire-website/package-lock.json
+          cache-dependency-path: Empire-Networks-Responsive-3D/package-lock.json
 
       - name: Install dependencies
-        working-directory: empire-website
+        working-directory: Empire-Networks-Responsive-3D
         run: npm ci
 
       - name: Build website
-        working-directory: empire-website
+        working-directory: Empire-Networks-Responsive-3D
         run: npm run build
