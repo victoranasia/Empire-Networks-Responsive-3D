@@ -4,7 +4,52 @@ on:
   push:
     branches:
       - main
+name: Deploy Empire Networks to Production
 
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Empire-Networks-Responsive-3D/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Empire-Networks-Responsive-3D
+        run: npm ci
+
+      - name: Build website
+        working-directory: Empire-Networks-Responsive-3D
+        run: npm run build
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/empire-production
+          chmod 600 ~/.ssh/empire-production
+
+      - name: Add production server to known hosts
+        run: |
+          ssh-keyscan -p "${{ secrets.PRODUCTION_PORT }}" "${{ secrets.PRODUCTION_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy website
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/empire-production -p ${{ secrets.PRODUCTION_PORT }}" \
+            Empire-Networks-Responsive-3D/dist/ \
+            ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:/var/www/empire-networks-production/
 jobs:
   deploy:
     runs-on: ubuntu-latest
